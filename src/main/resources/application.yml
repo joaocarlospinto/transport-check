@@ -1,0 +1,23 @@
+metro:
+  api:
+    base-url: https://api.metrolisboa.pt:8243
+    token-path: /token
+    estado-path: /estadoServicoML/1.0.0/estadoLinha/todos
+    consumer-key: ${METRO_CONSUMER_KEY}
+    consumer-secret: ${METRO_CONSUMER_SECRET}
+
+ntfy:
+  base-url: https://ntfy.sh
+  topic: ${NTFY_TOPIC}
+
+alerts:
+  schedule-ms: 120000
+  notify-on-first-run: false
+
+spring:
+  application:
+    name: metro-alerts
+
+logging:
+  level:
+    com.example.metroalerts: INFO
