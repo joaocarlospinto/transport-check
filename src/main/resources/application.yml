@@ -18,6 +18,9 @@ spring:
   application:
     name: metro-alerts
 
+server:
+  port: ${PORT:8080}
+
 logging:
   level:
     com.example.metroalerts: INFO
