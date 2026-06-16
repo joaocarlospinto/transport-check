@@ -15,7 +15,7 @@ public enum EstadoLinha {
             return DESCONHECIDO;
         }
         return switch (code.trim()) {
-            case "0" -> NORMAL;
+            case "Ok", "0" -> NORMAL;
             case "1", "2", "9" -> PERTURBADO;
             default -> DESCONHECIDO;
         };

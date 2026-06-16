@@ -14,6 +14,12 @@ class EstadoLinhaTest {
         assertThat(EstadoLinha.fromApiCode("0")).isEqualTo(EstadoLinha.NORMAL);
     }
 
+    @Test
+    void codeOkText_mapsToNormal() {
+        assertThat(EstadoLinha.fromApiCode("Ok")).isEqualTo(EstadoLinha.NORMAL);
+        assertThat(EstadoLinha.fromApiCode(" Ok")).isEqualTo(EstadoLinha.NORMAL);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"1", "2", "9"})
     void disruptionCodes_mapToPerturbado(String code) {

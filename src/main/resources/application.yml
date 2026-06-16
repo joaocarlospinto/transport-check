@@ -2,9 +2,11 @@ metro:
   api:
     base-url: https://api.metrolisboa.pt:8243
     token-path: /token
-    estado-path: /estadoServicoML/1.0.0/estadoLinha/todos
+    estado-path: /estadoServicoML/1.0.1/estadoLinha/todos
     consumer-key: ${METRO_CONSUMER_KEY}
     consumer-secret: ${METRO_CONSUMER_SECRET}
+    truststore: ${METRO_TRUSTSTORE:./metro-truststore.jks}
+    truststore-password: ${METRO_TRUSTSTORE_PASSWORD:metrostore}
 
 ntfy:
   base-url: https://ntfy.sh
