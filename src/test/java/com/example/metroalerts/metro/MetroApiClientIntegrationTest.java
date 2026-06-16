@@ -27,9 +27,7 @@ class MetroApiClientIntegrationTest {
                 "/token",
                 "/estadoServicoML/1.0.0/estadoLinha/todos",
                 "test-key",
-                "test-secret",
-                null,   // truststore — not needed for plain HTTP in tests
-                null
+                "test-secret"
         );
         client = new MetroApiClient(props);
     }

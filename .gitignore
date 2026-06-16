@@ -5,5 +5,6 @@ target/
 metro-state.json
 metro-truststore.jks
 metro-api.cer
+!src/main/resources/metro-api.cer
 .env
 /.idea

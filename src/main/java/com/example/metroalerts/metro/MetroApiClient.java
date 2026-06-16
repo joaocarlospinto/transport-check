@@ -16,10 +16,10 @@ import org.springframework.web.client.RestClient;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
@@ -120,45 +120,47 @@ public class MetroApiClient {
     }
 
     private static JdkClientHttpRequestFactory buildRequestFactory(MetroApiProperties props) {
-        HttpClient.Builder builder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5));
-        if (props.truststore() != null && !props.truststore().isBlank()) {
-            builder.sslContext(buildSslContext(props.truststore(), props.truststorePassword()));
-        }
-        return new JdkClientHttpRequestFactory(builder.build());
+        HttpClient httpClient = HttpClient.newBuilder()
+                .sslContext(buildSslContext())
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        return new JdkClientHttpRequestFactory(httpClient);
     }
 
     /**
-     * Builds an SSLContext that trusts both the project truststore (Metro API cert)
-     * and the default JVM truststore (standard CAs used by everything else).
+     * Builds an SSLContext that trusts both the bundled Metro API certificate
+     * (classpath:metro-api.cer) and the default JVM CAs (for everything else).
      */
-    private static SSLContext buildSslContext(String truststorePath, String truststorePassword) {
+    private static SSLContext buildSslContext() {
         try {
-            char[] password = truststorePassword != null ? truststorePassword.toCharArray() : new char[0];
-
-            KeyStore projectStore = KeyStore.getInstance("JKS");
-            try (InputStream is = new FileInputStream(truststorePath)) {
-                projectStore.load(is, password);
+            // Load bundled Metro API certificate
+            KeyStore metroStore = KeyStore.getInstance("JKS");
+            metroStore.load(null, null);
+            try (InputStream is = MetroApiClient.class.getResourceAsStream("/metro-api.cer")) {
+                if (is == null) throw new IllegalStateException("metro-api.cer not found in classpath");
+                X509Certificate cert = (X509Certificate)
+                        CertificateFactory.getInstance("X.509").generateCertificate(is);
+                metroStore.setCertificateEntry("metrolisboa-api", cert);
             }
 
+            // Load default JVM CAs
             KeyStore defaultStore = KeyStore.getInstance(KeyStore.getDefaultType());
             String defaultPath = System.getProperty("java.home") + "/lib/security/cacerts";
-            try (InputStream is = new FileInputStream(defaultPath)) {
+            try (InputStream is = new java.io.FileInputStream(defaultPath)) {
                 defaultStore.load(is, "changeit".toCharArray());
             }
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(projectStore);
-            X509TrustManager projectTm = (X509TrustManager) tmf.getTrustManagers()[0];
+            tmf.init(metroStore);
+            X509TrustManager metroTm = (X509TrustManager) tmf.getTrustManagers()[0];
 
             tmf.init(defaultStore);
             X509TrustManager defaultTm = (X509TrustManager) tmf.getTrustManagers()[0];
 
-            // Trust cert if it's valid in either truststore
             X509TrustManager merged = new X509TrustManager() {
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
-                    X509Certificate[] a = projectTm.getAcceptedIssuers();
+                    X509Certificate[] a = metroTm.getAcceptedIssuers();
                     X509Certificate[] b = defaultTm.getAcceptedIssuers();
                     X509Certificate[] result = new X509Certificate[a.length + b.length];
                     System.arraycopy(a, 0, result, 0, a.length);
@@ -169,31 +171,25 @@ public class MetroApiClient {
                 @Override
                 public void checkClientTrusted(X509Certificate[] chain, String authType)
                         throws java.security.cert.CertificateException {
-                    try {
-                        projectTm.checkClientTrusted(chain, authType);
-                    } catch (java.security.cert.CertificateException e) {
-                        defaultTm.checkClientTrusted(chain, authType);
-                    }
+                    try { metroTm.checkClientTrusted(chain, authType); }
+                    catch (java.security.cert.CertificateException e) { defaultTm.checkClientTrusted(chain, authType); }
                 }
 
                 @Override
                 public void checkServerTrusted(X509Certificate[] chain, String authType)
                         throws java.security.cert.CertificateException {
-                    try {
-                        projectTm.checkServerTrusted(chain, authType);
-                    } catch (java.security.cert.CertificateException e) {
-                        defaultTm.checkServerTrusted(chain, authType);
-                    }
+                    try { metroTm.checkServerTrusted(chain, authType); }
+                    catch (java.security.cert.CertificateException e) { defaultTm.checkServerTrusted(chain, authType); }
                 }
             };
 
             SSLContext ctx = SSLContext.getInstance("TLS");
             ctx.init(null, new javax.net.ssl.TrustManager[]{merged}, null);
-            log.info("SSL context loaded from project truststore: {}", truststorePath);
+            log.info("SSL context loaded from bundled metro-api.cer");
             return ctx;
 
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to load project truststore from: " + truststorePath, e);
+            throw new IllegalStateException("Failed to build SSL context from bundled certificate", e);
         }
     }
 

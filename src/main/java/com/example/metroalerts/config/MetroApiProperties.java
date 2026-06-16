@@ -11,8 +11,6 @@ public record MetroApiProperties(
         @NotBlank String tokenPath,
         @NotBlank String estadoPath,
         @NotBlank String consumerKey,
-        @NotBlank String consumerSecret,
-        String truststore,
-        String truststorePassword
+        @NotBlank String consumerSecret
 ) {
 }
