@@ -64,15 +64,13 @@ MetroStatusService → StateChangeDetector → NtfyNotifier
 
 ## API State Mapping
 
-`EstadoLinha.fromApiCode()` maps raw API strings to internal states. The API currently returns text codes:
+`MetroStatusService` reads the `*_curta` fields from the `"resposta"` object (`azul_curta`, `amarela_curta`, `verde_curta`, `vermelha_curta`). `EstadoLinha.fromApiCode()` maps those short strings to internal states:
 
 | Raw value | Internal state |
 |-----------|---------------|
-| `"Ok"`, `"0"` | `NORMAL` |
-| `"1"`, `"2"`, `"9"` | `PERTURBADO` |
-| anything else | `DESCONHECIDO` |
-
-**When a real disruption occurs**, the unknown code will appear in the logs as a WARN from `MetroStatusService`. Add it to the `switch` in `EstadoLinha.fromApiCode()`.
+| `"normal"` (case-insensitive) | `NORMAL` |
+| any other non-blank string | `PERTURBADO` |
+| null or blank | `DESCONHECIDO` |
 
 ## Testing Approach
 

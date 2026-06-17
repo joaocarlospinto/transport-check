@@ -8,6 +8,8 @@ import com.example.metroalerts.metro.model.Linha;
 import com.example.metroalerts.notify.NtfyNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -31,11 +33,18 @@ public class AlertScheduler {
         this.notifier = notifier;
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStartup() {
+        try {
+            notifier.notificarInicio();
+        } catch (Exception e) {
+            log.error("Failed to send startup notification: {}", e.getMessage());
+        }
+    }
+
     @Scheduled(fixedDelayString = "${alerts.schedule-ms}")
     public void verificar() {
         try {
-            log.debug("Starting metro status check");
-
             Map<Linha, EstadoLinha> estadoAtual = statusService.fetchEstadoAtual();
             List<Transicao> transicoes = detector.detectar(estadoAtual);
 
@@ -49,7 +58,11 @@ public class AlertScheduler {
                 }
             }
 
-            log.debug("Metro status check complete. {} transition(s) detected.", transicoes.size());
+            if (transicoes.isEmpty()) {
+                log.info("Metro status check complete. All lines normal, no notifications sent.");
+            } else {
+                log.info("Metro status check complete. {} transition(s) detected.", transicoes.size());
+            }
         } catch (Exception e) {
             log.error("Error during metro status check: {}", e.getMessage(), e);
         }

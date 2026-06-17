@@ -14,10 +14,6 @@ public enum EstadoLinha {
         if (code == null || code.isBlank()) {
             return DESCONHECIDO;
         }
-        return switch (code.trim()) {
-            case "Ok", "0" -> NORMAL;
-            case "1", "2", "9" -> PERTURBADO;
-            default -> DESCONHECIDO;
-        };
+        return "normal".equalsIgnoreCase(code.trim()) ? NORMAL : PERTURBADO;
     }
 }

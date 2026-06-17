@@ -10,19 +10,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EstadoLinhaTest {
 
     @Test
-    void code0_mapsToNormal() {
-        assertThat(EstadoLinha.fromApiCode("0")).isEqualTo(EstadoLinha.NORMAL);
+    void normalCode_mapsToNormal() {
+        assertThat(EstadoLinha.fromApiCode("normal")).isEqualTo(EstadoLinha.NORMAL);
     }
 
     @Test
-    void codeOkText_mapsToNormal() {
-        assertThat(EstadoLinha.fromApiCode("Ok")).isEqualTo(EstadoLinha.NORMAL);
-        assertThat(EstadoLinha.fromApiCode(" Ok")).isEqualTo(EstadoLinha.NORMAL);
+    void normalCodeCaseInsensitive_mapsToNormal() {
+        assertThat(EstadoLinha.fromApiCode("Normal")).isEqualTo(EstadoLinha.NORMAL);
+        assertThat(EstadoLinha.fromApiCode("NORMAL")).isEqualTo(EstadoLinha.NORMAL);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"1", "2", "9"})
-    void disruptionCodes_mapToPerturbado(String code) {
+    @ValueSource(strings = {"interrompida", "condicionada", "perturbada", "some_unknown_value"})
+    void nonNormalCodes_mapToPerturbado(String code) {
         assertThat(EstadoLinha.fromApiCode(code)).isEqualTo(EstadoLinha.PERTURBADO);
     }
 
@@ -34,10 +34,5 @@ class EstadoLinhaTest {
     @Test
     void blankCode_mapsToDesconhecido() {
         assertThat(EstadoLinha.fromApiCode("  ")).isEqualTo(EstadoLinha.DESCONHECIDO);
-    }
-
-    @Test
-    void unknownCode_mapsToDesconhecido() {
-        assertThat(EstadoLinha.fromApiCode("99")).isEqualTo(EstadoLinha.DESCONHECIDO);
     }
 }

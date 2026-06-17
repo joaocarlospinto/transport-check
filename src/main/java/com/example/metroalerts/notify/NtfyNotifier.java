@@ -33,6 +33,11 @@ public class NtfyNotifier {
         this.topicUrl = "/" + props.topic();
     }
 
+    public void notificarInicio() {
+        log.info("Sending startup notification");
+        enviar("Aplicação iniciada e a monitorizar o Metro de Lisboa.", "Metro Alerts — Online", "default", "rocket");
+    }
+
     @Retryable(retryFor = Exception.class, maxAttempts = 2, backoff = @Backoff(delay = 3000))
     public void notificar(Transicao transicao) {
         if (transicao.isInterrupcao()) {

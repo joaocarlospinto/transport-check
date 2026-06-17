@@ -48,10 +48,10 @@ class MetroApiClientIntegrationTest {
                         .withBody("""
                                 {
                                   "resposta": {
-                                    "azul": "0",
-                                    "amarela": "0",
-                                    "verde": "9",
-                                    "vermelha": "0"
+                                    "azul_curta": "normal",
+                                    "amarela_curta": "normal",
+                                    "verde_curta": "interrompida",
+                                    "vermelha_curta": "normal"
                                   },
                                   "codigo": "200"
                                 }
@@ -62,8 +62,8 @@ class MetroApiClientIntegrationTest {
         assertThat(result).containsKey("resposta");
         @SuppressWarnings("unchecked")
         Map<String, Object> resposta = (Map<String, Object>) result.get("resposta");
-        assertThat(resposta.get("verde")).isEqualTo("9");
-        assertThat(resposta.get("azul")).isEqualTo("0");
+        assertThat(resposta.get("verde_curta")).isEqualTo("interrompida");
+        assertThat(resposta.get("azul_curta")).isEqualTo("normal");
     }
 
     @Test
@@ -98,7 +98,7 @@ class MetroApiClientIntegrationTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
                                 {
-                                  "resposta": {"azul":"0","amarela":"0","verde":"0","vermelha":"0"},
+                                  "resposta": {"azul_curta":"normal","amarela_curta":"normal","verde_curta":"normal","vermelha_curta":"normal"},
                                   "codigo": "200"
                                 }
                                 """)));
