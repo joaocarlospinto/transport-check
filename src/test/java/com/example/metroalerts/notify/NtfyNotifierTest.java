@@ -4,6 +4,7 @@ import com.example.metroalerts.config.NtfyProperties;
 import com.example.metroalerts.detection.Transicao;
 import com.example.metroalerts.metro.model.EstadoLinha;
 import com.example.metroalerts.metro.model.Linha;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import org.junit.jupiter.api.AfterEach;
@@ -27,7 +28,7 @@ class NtfyNotifierTest {
                 "http://localhost:" + wireMock.port(),
                 "test-topic"
         );
-        notifier = new NtfyNotifier(props);
+        notifier = new NtfyNotifier(props, new ObjectMapper());
 
         wireMock.stubFor(post(urlEqualTo("/"))
                 .willReturn(aResponse().withStatus(200)));

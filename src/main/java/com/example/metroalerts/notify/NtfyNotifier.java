@@ -2,9 +2,9 @@ package com.example.metroalerts.notify;
 
 import com.example.metroalerts.config.NtfyProperties;
 import com.example.metroalerts.detection.Transicao;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -21,8 +21,10 @@ public class NtfyNotifier {
 
     private final RestClient client;
     private final String topic;
+    private final ObjectMapper objectMapper;
 
-    public NtfyNotifier(NtfyProperties props) {
+    public NtfyNotifier(NtfyProperties props, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         // SimpleClientHttpRequestFactory (HttpURLConnection) is used instead of the JDK
         // HttpClient because JDK 21's HttpClient rejects non-standard header names like
         // "Click" that ntfy.sh relies on for its action button feature.
@@ -73,13 +75,18 @@ public class NtfyNotifier {
     }
 
     private void enviar(String mensagem, String titulo, String prioridade, List<String> tags) {
-        var payload = new NtfyPayload(topic, mensagem, titulo, prioridade, tags, METRO_URL);
-        client.post()
-                .uri("/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            String json = objectMapper.writeValueAsString(
+                    new NtfyPayload(topic, mensagem, titulo, prioridade, tags, METRO_URL));
+            client.post()
+                    .uri("/")
+                    .header("Content-Type", "application/json")
+                    .body(json)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize ntfy payload", e);
+        }
     }
 
     private record NtfyPayload(
