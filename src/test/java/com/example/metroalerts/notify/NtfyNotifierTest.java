@@ -29,7 +29,7 @@ class NtfyNotifierTest {
         );
         notifier = new NtfyNotifier(props);
 
-        wireMock.stubFor(post(urlEqualTo("/test-topic"))
+        wireMock.stubFor(post(urlEqualTo("/"))
                 .willReturn(aResponse().withStatus(200)));
     }
 
@@ -44,11 +44,12 @@ class NtfyNotifierTest {
 
         assertThatCode(() -> notifier.notificar(t)).doesNotThrowAnyException();
 
-        wireMock.verify(postRequestedFor(urlEqualTo("/test-topic"))
-                .withHeader("Priority", equalTo("urgent"))
-                .withHeader("Tags", equalTo("warning"))
-                .withHeader("Title", containing("Verde"))
-                .withRequestBody(containing("interrompida")));
+        wireMock.verify(postRequestedFor(urlEqualTo("/"))
+                .withHeader("Content-Type", containing("application/json"))
+                .withRequestBody(matchingJsonPath("$.priority", equalTo("urgent")))
+                .withRequestBody(matchingJsonPath("$.tags[0]", equalTo("warning")))
+                .withRequestBody(matchingJsonPath("$.title", containing("Verde")))
+                .withRequestBody(matchingJsonPath("$.message", containing("interrompida"))));
     }
 
     @Test
@@ -57,11 +58,12 @@ class NtfyNotifierTest {
 
         assertThatCode(() -> notifier.notificar(t)).doesNotThrowAnyException();
 
-        wireMock.verify(postRequestedFor(urlEqualTo("/test-topic"))
-                .withHeader("Priority", equalTo("default"))
-                .withHeader("Tags", equalTo("white_check_mark"))
-                .withHeader("Title", containing("Azul"))
-                .withRequestBody(containing("restabelecida")));
+        wireMock.verify(postRequestedFor(urlEqualTo("/"))
+                .withHeader("Content-Type", containing("application/json"))
+                .withRequestBody(matchingJsonPath("$.priority", equalTo("default")))
+                .withRequestBody(matchingJsonPath("$.tags[0]", equalTo("white_check_mark")))
+                .withRequestBody(matchingJsonPath("$.title", containing("Azul")))
+                .withRequestBody(matchingJsonPath("$.message", containing("restabelecida"))));
     }
 
     @Test
@@ -70,6 +72,6 @@ class NtfyNotifierTest {
 
         assertThatCode(() -> notifier.notificar(t)).doesNotThrowAnyException();
 
-        wireMock.verify(0, postRequestedFor(urlEqualTo("/test-topic")));
+        wireMock.verify(0, postRequestedFor(urlEqualTo("/")));
     }
 }

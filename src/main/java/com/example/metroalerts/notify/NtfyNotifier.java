@@ -4,11 +4,14 @@ import com.example.metroalerts.config.NtfyProperties;
 import com.example.metroalerts.detection.Transicao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+
+import java.util.List;
 
 @Service
 public class NtfyNotifier {
@@ -17,7 +20,7 @@ public class NtfyNotifier {
     private static final String METRO_URL = "https://www.metrolisboa.pt/";
 
     private final RestClient client;
-    private final String topicUrl;
+    private final String topic;
 
     public NtfyNotifier(NtfyProperties props) {
         // SimpleClientHttpRequestFactory (HttpURLConnection) is used instead of the JDK
@@ -30,12 +33,12 @@ public class NtfyNotifier {
                 .baseUrl(props.baseUrl())
                 .requestFactory(factory)
                 .build();
-        this.topicUrl = "/" + props.topic();
+        this.topic = props.topic();
     }
 
     public void notificarInicio() {
         log.info("Sending startup notification");
-        enviar("Aplicação iniciada e a monitorizar o Metro de Lisboa.", "Metro Alerts — Online", "default", "rocket");
+        enviar("Aplicação iniciada e a monitorizar o Metro de Lisboa.", "Metro Alerts — Online", "default", List.of("rocket"));
     }
 
     @Retryable(retryFor = Exception.class, maxAttempts = 2, backoff = @Backoff(delay = 3000))
@@ -55,7 +58,7 @@ public class NtfyNotifier {
                 "Linha " + linha + ": circulação interrompida",
                 "Metro de Lisboa — Linha " + linha,
                 "urgent",
-                "warning"
+                List.of("warning")
         );
     }
 
@@ -65,20 +68,26 @@ public class NtfyNotifier {
                 "Linha " + linha + ": circulação restabelecida",
                 "Metro de Lisboa — Linha " + linha,
                 "default",
-                "white_check_mark"
+                List.of("white_check_mark")
         );
     }
 
-    private void enviar(String mensagem, String titulo, String prioridade, String tags) {
+    private void enviar(String mensagem, String titulo, String prioridade, List<String> tags) {
+        var payload = new NtfyPayload(topic, mensagem, titulo, prioridade, tags, METRO_URL);
         client.post()
-                .uri(topicUrl)
-                .header("Content-Type", "text/plain")
-                .header("Title", titulo)
-                .header("Priority", prioridade)
-                .header("Tags", tags)
-                .header("Click", METRO_URL)
-                .body(mensagem)
+                .uri("/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
                 .retrieve()
                 .toBodilessEntity();
     }
+
+    private record NtfyPayload(
+            String topic,
+            String message,
+            String title,
+            String priority,
+            List<String> tags,
+            String click
+    ) {}
 }
