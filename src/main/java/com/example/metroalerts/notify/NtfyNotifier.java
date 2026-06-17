@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class NtfyNotifier {
@@ -76,8 +77,14 @@ public class NtfyNotifier {
 
     private void enviar(String mensagem, String titulo, String prioridade, List<String> tags) {
         try {
-            String json = objectMapper.writeValueAsString(
-                    new NtfyPayload(topic, mensagem, titulo, prioridade, tags, METRO_URL));
+            String json = objectMapper.writeValueAsString(Map.of(
+                    "topic", topic,
+                    "message", mensagem,
+                    "title", titulo,
+                    "priority", prioridade,
+                    "tags", tags,
+                    "click", METRO_URL
+            ));
             client.post()
                     .uri("/")
                     .header("Content-Type", "application/json")
@@ -85,16 +92,7 @@ public class NtfyNotifier {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize ntfy payload", e);
+            throw new RuntimeException("Failed to send ntfy notification", e);
         }
     }
-
-    private record NtfyPayload(
-            String topic,
-            String message,
-            String title,
-            String priority,
-            List<String> tags,
-            String click
-    ) {}
 }
