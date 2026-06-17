@@ -4,6 +4,7 @@ import com.example.metroalerts.config.NtfyProperties;
 import com.example.metroalerts.detection.Transicao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -72,6 +73,7 @@ public class NtfyNotifier {
     private void enviar(String mensagem, String titulo, String prioridade, String tags) {
         client.post()
                 .uri(topicUrl)
+                .contentType(MediaType.TEXT_PLAIN)
                 .header("Title", titulo)
                 .header("Priority", prioridade)
                 .header("Tags", tags)
