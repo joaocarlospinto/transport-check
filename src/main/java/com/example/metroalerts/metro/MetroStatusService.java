@@ -40,6 +40,14 @@ public class MetroStatusService {
             resposta = (Map<String, Object>) respostaRaw;
         } else if (respostaRaw instanceof String json) {
             // API returns "resposta" as a JSON-encoded string rather than a nested object
+            String trimmed = json.trim();
+            if (!trimmed.startsWith("{")) {
+                // Outside operating hours the API returns a plain status message
+                // (e.g. "Circulação encerrada") instead of the per-line JSON object.
+                // This is an expected, non-actionable state — not a parse error.
+                log.info("Metro not reporting per-line status (resposta='{}'); treating all lines as DESCONHECIDO", trimmed);
+                return defaultDesconhecido();
+            }
             try {
                 resposta = objectMapper.readValue(json, MAP_TYPE);
             } catch (Exception e) {
