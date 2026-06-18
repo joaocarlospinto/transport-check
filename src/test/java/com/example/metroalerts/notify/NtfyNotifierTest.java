@@ -47,7 +47,7 @@ class NtfyNotifierTest {
 
         wireMock.verify(postRequestedFor(urlEqualTo("/"))
                 .withHeader("Content-Type", containing("application/json"))
-                .withRequestBody(matchingJsonPath("$.priority", equalTo("urgent")))
+                .withRequestBody(matchingJsonPath("$.priority", equalTo("5")))
                 .withRequestBody(matchingJsonPath("$.tags[0]", equalTo("warning")))
                 .withRequestBody(matchingJsonPath("$.title", containing("Verde")))
                 .withRequestBody(matchingJsonPath("$.message", containing("interrompida"))));
@@ -61,7 +61,7 @@ class NtfyNotifierTest {
 
         wireMock.verify(postRequestedFor(urlEqualTo("/"))
                 .withHeader("Content-Type", containing("application/json"))
-                .withRequestBody(matchingJsonPath("$.priority", equalTo("default")))
+                .withRequestBody(matchingJsonPath("$.priority", equalTo("3")))
                 .withRequestBody(matchingJsonPath("$.tags[0]", equalTo("white_check_mark")))
                 .withRequestBody(matchingJsonPath("$.title", containing("Azul")))
                 .withRequestBody(matchingJsonPath("$.message", containing("restabelecida"))));

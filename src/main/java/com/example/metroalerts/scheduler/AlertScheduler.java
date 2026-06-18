@@ -38,7 +38,7 @@ public class AlertScheduler {
         try {
             notifier.notificarInicio();
         } catch (Exception e) {
-            log.error("Failed to send startup notification: {}", e.getMessage());
+            log.error("Failed to send startup notification: {}", e.getMessage(), e);
         }
     }
 

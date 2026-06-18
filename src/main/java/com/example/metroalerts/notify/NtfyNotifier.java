@@ -39,9 +39,15 @@ public class NtfyNotifier {
         this.topic = props.topic();
     }
 
+    // ntfy's JSON publishing API requires priority as an integer 1-5
+    // (1=min, 3=default, 5=max/urgent). The word-based values ("urgent",
+    // "default") are only valid via the X-Priority header, not in the JSON body.
+    private static final int PRIORITY_DEFAULT = 3;
+    private static final int PRIORITY_URGENT = 5;
+
     public void notificarInicio() {
         log.info("Sending startup notification");
-        enviar("Aplicação iniciada e a monitorizar o Metro de Lisboa.", "Metro Alerts — Online", "default", List.of("rocket"));
+        enviar("Aplicação iniciada e a monitorizar o Metro de Lisboa.", "Metro Alerts — Online", PRIORITY_DEFAULT, List.of("rocket"));
     }
 
     @Retryable(retryFor = Exception.class, maxAttempts = 2, backoff = @Backoff(delay = 3000))
@@ -60,7 +66,7 @@ public class NtfyNotifier {
         enviar(
                 "Linha " + linha + ": circulação interrompida",
                 "Metro de Lisboa — Linha " + linha,
-                "urgent",
+                PRIORITY_URGENT,
                 List.of("warning")
         );
     }
@@ -70,12 +76,12 @@ public class NtfyNotifier {
         enviar(
                 "Linha " + linha + ": circulação restabelecida",
                 "Metro de Lisboa — Linha " + linha,
-                "default",
+                PRIORITY_DEFAULT,
                 List.of("white_check_mark")
         );
     }
 
-    private void enviar(String mensagem, String titulo, String prioridade, List<String> tags) {
+    private void enviar(String mensagem, String titulo, int prioridade, List<String> tags) {
         try {
             String json = objectMapper.writeValueAsString(Map.of(
                     "topic", topic,
@@ -92,7 +98,7 @@ public class NtfyNotifier {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send ntfy notification", e);
+            throw new RuntimeException("Failed to send ntfy notification: " + e.getMessage(), e);
         }
     }
 }
