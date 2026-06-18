@@ -1,0 +1,8 @@
+# Windows batch scripts must use CRLF — cmd.exe mishandles caret (^) line
+# continuations with LF endings, which silently breaks the Maven wrapper.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# POSIX shell scripts must stay LF.
+*.sh  text eol=lf
+mvnw  text eol=lf
