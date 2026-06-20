@@ -30,12 +30,25 @@ class MetroStatusServiceTest {
                         "\"verde_curta\":\"Existem perturbações\",\"vermelha_curta\":\"normal\"}"
         ));
 
-        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual();
+        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual().estados();
 
         assertThat(result.get(Linha.AZUL)).isEqualTo(EstadoLinha.NORMAL);
         assertThat(result.get(Linha.AMARELA)).isEqualTo(EstadoLinha.NORMAL);
         assertThat(result.get(Linha.VERDE)).isEqualTo(EstadoLinha.PERTURBADO);
         assertThat(result.get(Linha.VERMELHA)).isEqualTo(EstadoLinha.NORMAL);
+    }
+
+    @Test
+    void respostaAsJsonObjectString_capturesRawPerLineValues() {
+        when(apiClient.fetchEstadoLinhas()).thenReturn(Map.of(
+                "resposta", "{\"azul_curta\":\"normal\",\"amarela_curta\":\"normal\"," +
+                        "\"verde_curta\":\"Existem perturbações\",\"vermelha_curta\":\"normal\"}"
+        ));
+
+        Map<Linha, String> raw = service.fetchEstadoAtual().codigosBrutos();
+
+        assertThat(raw.get(Linha.AZUL)).isEqualTo("normal");
+        assertThat(raw.get(Linha.VERDE)).isEqualTo("Existem perturbações");
     }
 
     @Test
@@ -46,9 +59,10 @@ class MetroStatusServiceTest {
                 "resposta", "Circulação encerrada"
         ));
 
-        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual();
+        EstadoSnapshot snapshot = service.fetchEstadoAtual();
 
-        assertThat(result.values()).containsOnly(EstadoLinha.DESCONHECIDO);
+        assertThat(snapshot.estados().values()).containsOnly(EstadoLinha.DESCONHECIDO);
+        assertThat(snapshot.codigosBrutos().values()).containsOnly("Circulação encerrada");
     }
 
     @Test
@@ -59,7 +73,7 @@ class MetroStatusServiceTest {
                 "resposta", "{\"azul_curta\":"
         ));
 
-        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual();
+        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual().estados();
 
         assertThat(result.values()).containsOnly(EstadoLinha.DESCONHECIDO);
     }
@@ -68,7 +82,7 @@ class MetroStatusServiceTest {
     void respostaMissing_returnsAllDesconhecido() {
         when(apiClient.fetchEstadoLinhas()).thenReturn(Map.of("outro", "x"));
 
-        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual();
+        Map<Linha, EstadoLinha> result = service.fetchEstadoAtual().estados();
 
         assertThat(result.values()).containsOnly(EstadoLinha.DESCONHECIDO);
     }

@@ -58,6 +58,7 @@ MetroStatusService → StateChangeDetector → NtfyNotifier
 **Key design decisions:**
 
 - **Transition-based alerting** — alerts fire on state *changes* (NORMAL→PERTURBADO, PERTURBADO→NORMAL), not on polling windows. This prevents duplicate or missed alerts across restarts.
+- **Raw API value is logged on every transition** — `MetroStatusService.fetchEstadoAtual()` returns an `EstadoSnapshot` (`estados` + `codigosBrutos`, the raw `*_curta` strings). When a transition is detected, `AlertScheduler` logs the raw value that produced it (`Transition for AZUL: NORMAL -> PERTURBADO | raw API value: '...'`). This exists because the metro sometimes reports a closure *per line* rather than as the top-level `"Circulação encerrada"` string, which maps to `PERTURBADO` and looks like a real disruption — the raw value in the log lets you tell them apart.
 - **DESCONHECIDO is never actionable** — any transition involving DESCONHECIDO is detected and stored but never triggers a notification. This avoids false alerts if the API changes format.
 - **First run has no baseline** — `JsonFileStateStore` loads `metro-state.json` on startup. If the file is missing, the first cycle only establishes the baseline without alerting.
 - **SSL** — The Metro API runs on WSO2 with a non-standard certificate. `MetroApiClient` builds a merged `SSLContext` that trusts both the bundled `src/main/resources/metro-api.cer` and the default JVM CAs. The ntfy.sh client (`NtfyNotifier`) uses `SimpleClientHttpRequestFactory` (HttpURLConnection) because JDK 21's HttpClient rejects non-standard header names like `Click` that ntfy uses.
@@ -71,6 +72,8 @@ MetroStatusService → StateChangeDetector → NtfyNotifier
 | `"normal"` (case-insensitive) | `NORMAL` |
 | any other non-blank string | `PERTURBADO` |
 | null or blank | `DESCONHECIDO` |
+
+`fetchEstadoAtual()` returns an `EstadoSnapshot` carrying both the mapped `estados` and the `codigosBrutos` (the raw value each state was derived from). When `resposta` is not the per-line JSON object (the plain closed-hours message, a missing field, or a parse failure) every line maps to `DESCONHECIDO` and `codigosBrutos` holds the raw payload so it still shows up in transition logs.
 
 ## Testing Approach
 

@@ -2,9 +2,8 @@ package com.example.metroalerts.scheduler;
 
 import com.example.metroalerts.detection.StateChangeDetector;
 import com.example.metroalerts.detection.Transicao;
+import com.example.metroalerts.metro.EstadoSnapshot;
 import com.example.metroalerts.metro.MetroStatusService;
-import com.example.metroalerts.metro.model.EstadoLinha;
-import com.example.metroalerts.metro.model.Linha;
 import com.example.metroalerts.notify.NtfyNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class AlertScheduler {
@@ -45,10 +43,13 @@ public class AlertScheduler {
     @Scheduled(fixedDelayString = "${alerts.schedule-ms}")
     public void verificar() {
         try {
-            Map<Linha, EstadoLinha> estadoAtual = statusService.fetchEstadoAtual();
-            List<Transicao> transicoes = detector.detectar(estadoAtual);
+            EstadoSnapshot snapshot = statusService.fetchEstadoAtual();
+            List<Transicao> transicoes = detector.detectar(snapshot.estados());
 
             for (Transicao transicao : transicoes) {
+                log.info("Transition for {}: {} -> {} | raw API value: '{}'",
+                        transicao.linha(), transicao.anterior(), transicao.atual(),
+                        snapshot.codigosBrutos().get(transicao.linha()));
                 if (transicao.isNotificavel()) {
                     try {
                         notifier.notificar(transicao);

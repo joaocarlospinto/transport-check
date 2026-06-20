@@ -119,12 +119,20 @@ docker run -d \
 
 ```
 Scheduler (2 min)
-    └── MetroStatusService       # consulta a API oficial
+    └── MetroStatusService       # consulta a API oficial → EstadoSnapshot (estado + valor bruto)
             └── MetroApiClient   # OAuth2 + cache de token
     └── StateChangeDetector      # compara com o último estado
             └── JsonFileStateStore  # persiste em metro-state.json
     └── NtfyNotifier             # envia notificação via ntfy.sh
 ```
+
+Sempre que ocorre uma transição, o `AlertScheduler` regista no log o valor bruto devolvido pela API para essa linha:
+
+```
+Transition for AZUL: NORMAL -> PERTURBADO | raw API value: '...'
+```
+
+Isto serve para distinguir uma perturbação real do encerramento do metro — em alguns dias a API reporta o fecho linha a linha (em vez da mensagem global `"Circulação encerrada"`), o que é mapeado para `PERTURBADO`. O valor bruto no log permite ver exatamente o que a API enviou.
 
 ## Linhas monitorizadas
 
@@ -135,4 +143,4 @@ Scheduler (2 min)
 | Verde    | Ok            | a confirmar       |
 | Vermelha | Ok            | a confirmar       |
 
-> Os códigos de estado perturbado são registados no log quando ocorre uma perturbação real. Consulta `EstadoLinha.java` para atualizar o mapeamento.
+> Os valores brutos da API são registados no log em cada transição (ver secção [Arquitetura](#arquitetura)). Consulta `EstadoLinha.java` para atualizar o mapeamento.
