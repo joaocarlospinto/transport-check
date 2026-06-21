@@ -100,6 +100,32 @@ class StateChangeDetectorTest {
     }
 
     @Test
+    void normalToEncerrado_notNotifiable() {
+        store.putAll(allNormal());
+
+        Map<Linha, EstadoLinha> atual = allNormal();
+        atual.put(Linha.AMARELA, EstadoLinha.ENCERRADO);
+
+        List<Transicao> result = detector.detectar(atual);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).atual()).isEqualTo(EstadoLinha.ENCERRADO);
+        assertThat(result.get(0).isNotificavel()).isFalse();
+    }
+
+    @Test
+    void encerradoToNormal_notNotifiable() {
+        Map<Linha, EstadoLinha> baseline = allNormal();
+        baseline.put(Linha.AMARELA, EstadoLinha.ENCERRADO);
+        store.putAll(baseline);
+
+        List<Transicao> result = detector.detectar(allNormal());
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).isNotificavel()).isFalse();
+    }
+
+    @Test
     void stateIsUpdatedAfterTransition() {
         store.putAll(allNormal());
 

@@ -70,8 +70,11 @@ MetroStatusService → StateChangeDetector → NtfyNotifier
 | Raw value | Internal state |
 |-----------|---------------|
 | `"normal"` (case-insensitive) | `NORMAL` |
+| contains `"encerrad"` (e.g. `"encerrada"`, `"Circulação encerrada"`) | `ENCERRADO` |
 | any other non-blank string | `PERTURBADO` |
 | null or blank | `DESCONHECIDO` |
+
+`ENCERRADO` covers the overnight closure the API reports per-line (raw value `"encerrada"`). Like `DESCONHECIDO`, transitions into or out of `ENCERRADO` are detected and logged but never notified, since `isInterrupcao()`/`isRestabelecimento()` only fire on `NORMAL <-> PERTURBADO`. This stops the nightly close from looking like a real disruption.
 
 `fetchEstadoAtual()` returns an `EstadoSnapshot` carrying both the mapped `estados` and the `codigosBrutos` (the raw value each state was derived from). When `resposta` is not the per-line JSON object (the plain closed-hours message, a missing field, or a parse failure) every line maps to `DESCONHECIDO` and `codigosBrutos` holds the raw payload so it still shows up in transition logs.
 
