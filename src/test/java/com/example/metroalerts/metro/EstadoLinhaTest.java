@@ -26,6 +26,12 @@ class EstadoLinhaTest {
         assertThat(EstadoLinha.fromApiCode(code)).isEqualTo(EstadoLinha.PERTURBADO);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"encerrada", "Encerrada", "ENCERRADA", "Circulação encerrada"})
+    void closureCodes_mapToEncerrado(String code) {
+        assertThat(EstadoLinha.fromApiCode(code)).isEqualTo(EstadoLinha.ENCERRADO);
+    }
+
     @Test
     void nullCode_mapsToDesconhecido() {
         assertThat(EstadoLinha.fromApiCode(null)).isEqualTo(EstadoLinha.DESCONHECIDO);
