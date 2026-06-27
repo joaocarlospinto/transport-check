@@ -1,0 +1,18 @@
+services:
+  metro-alerts:
+    build: .
+    image: metro-alerts
+    container_name: metro-alerts
+    restart: unless-stopped
+    # Load METRO_CONSUMER_KEY / METRO_CONSUMER_SECRET / NTFY_TOPIC from .env
+    env_file:
+      - .env
+    # The app writes metro-state.json to its working directory. Run from /data
+    # (a persisted volume) so the NORMAL/PERTURBADO baseline survives restarts.
+    working_dir: /data
+    entrypoint: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - metro-state:/data
+
+volumes:
+  metro-state:
